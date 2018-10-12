@@ -76,7 +76,8 @@ public class RecursoInscripcionesCursos {
             Resource<InscripcionCurso> respuesta = new Resource<>(inscripcionGuardada, generarLinks(inscripcionGuardada));
             return ResponseEntity.created(URI.create(linkPropio.getHref())).body(respuesta);
         } catch (NoInscriptoEnCarreraException e) {
-            return ResponseEntity.badRequest().body("Primero debe inscribirse a la carrera " + inscripcionCurso.getCurso().getCarrera().getNombre());
+            //TODO agregar error handling y respuesta adecuada
+            return ResponseEntity.badRequest().build();
         }
     }
 
