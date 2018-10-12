@@ -15,7 +15,11 @@ import java.util.Set;
 public class Curso extends ResourceSupport {
 
     @Id
-    @GeneratedValue
+    @SequenceGenerator(name="curso_identificador_seq",
+            sequenceName="curso_identificador_seq",
+            allocationSize=50)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator="curso_identificador_seq")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer identificador;
 

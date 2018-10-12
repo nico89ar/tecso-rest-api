@@ -18,7 +18,11 @@ import java.time.LocalDate;
 public class Persona extends ResourceSupport {
 
     @Id
-    @GeneratedValue
+    @SequenceGenerator(name="persona_identificador_seq",
+            sequenceName="persona_identificador_seq",
+            allocationSize=50)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator="persona_identificador_seq")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     protected Integer identificador;
 

@@ -17,7 +17,11 @@ import java.util.Set;
 public class Carrera extends ResourceSupport {
 
     @Id
-    @GeneratedValue
+    @SequenceGenerator(name="carrera_identificador_seq",
+            sequenceName="carrera_identificador_seq",
+            allocationSize=50)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator="carrera_identificador_seq")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer identificador;
 
