@@ -93,6 +93,16 @@ public class RecursoInscripcionesCursos {
                     linkTo(methodOn(RecursoCursos.class).obtenerCurso(inscripcionCurso.getCurso().getIdentificador())).withSelfRel(),
                     linkTo(methodOn(RecursoCursos.class).listarCursos()).withRel("cursos"));
         }
+        if (!inscripcionCurso.getCurso().getCarrera().hasLinks()) {
+            inscripcionCurso.getCurso().getCarrera().add(
+                    linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(inscripcionCurso.getCurso().getCarrera().getIdentificador())).withSelfRel(),
+                    linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carreras"));
+        }
+        if (!inscripcionCurso.getCurso().getProfesor().hasLinks()) {
+            inscripcionCurso.getCurso().getProfesor().add(
+                    linkTo(methodOn(RecursoProfesores.class).obtenerProfesor(inscripcionCurso.getCurso().getProfesor().getIdentificador())).withSelfRel(),
+                    linkTo(methodOn(RecursoProfesores.class).listarProfesores()).withRel("profesores"));
+        }
         links.add(linkTo(methodOn(RecursoInscripcionesCursos.class).obtenerInscripcionCurso(
                 inscripcionCurso.getCurso().getIdentificador(),
                 inscripcionCurso.getAlumno().getIdentificador()))
