@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.hateoas.ResourceSupport;
 
 import javax.persistence.*;
@@ -39,6 +41,12 @@ public class Carrera extends ResourceSupport {
     private LocalDate fechaHasta;
 
     @OneToMany(mappedBy = "carrera")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Set<InscripcionCarrera> inscripcionesCarreras;
+
+    @OneToMany(mappedBy = "carrera")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    private Set<Curso> cursos;
 }

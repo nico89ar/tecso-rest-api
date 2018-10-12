@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.hateoas.ResourceSupport;
 
 import javax.persistence.*;
@@ -34,15 +36,16 @@ public class Curso extends ResourceSupport {
     @Column(nullable = false)
     private Integer anio;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "idcarrera", nullable = false)
     private Carrera carrera;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "idprofesor", nullable = false)
     private Profesor profesor;
 
     @OneToMany(mappedBy = "curso")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Set<InscripcionCurso> inscripcionesCursos;
 }

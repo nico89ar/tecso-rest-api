@@ -3,6 +3,8 @@ package com.tecso.rest_api.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -16,10 +18,12 @@ public class Alumno extends Persona {
     private Integer legajo;
 
     @OneToMany(mappedBy = "alumno")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Set<InscripcionCurso> inscripcionesCursos;
 
     @OneToMany(mappedBy = "alumno")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Set<InscripcionCarrera> inscripcionesCarreras;
 }
