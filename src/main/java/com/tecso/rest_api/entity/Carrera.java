@@ -3,8 +3,7 @@ package com.tecso.rest_api.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.hateoas.ResourceSupport;
@@ -14,8 +13,9 @@ import java.time.LocalDate;
 import java.util.Set;
 
 @Entity
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper =  false, exclude={"inscripcionesCarreras", "cursos"})
+@ToString(exclude={"inscripcionesCarreras", "cursos"})
 public class Carrera extends ResourceSupport {
 
     @Id

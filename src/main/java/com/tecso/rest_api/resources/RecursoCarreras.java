@@ -2,8 +2,8 @@ package com.tecso.rest_api.resources;
 
 import com.tecso.rest_api.entity.Carrera;
 import com.tecso.rest_api.service.ServicioCarreras;
+import com.tecso.rest_api.util.LinksHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +32,8 @@ public class RecursoCarreras {
         if (carrera == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<Carrera> respuesta = new Resource<>(carrera, generarLinks(carrera));
+            LinksHelper.agregarLinks(carrera);
+            Resource<Carrera> respuesta = new Resource<>(carrera);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -41,7 +41,10 @@ public class RecursoCarreras {
     @GetMapping
     public ResponseEntity listarCarreras() {
         List<Resource<Carrera>> carreras = servicioCarreras.listarCarrera().stream()
-                .map(carrera -> new Resource<>(carrera, generarLinks(carrera)))
+                .map(carrera -> {
+                    LinksHelper.agregarLinks(carrera);
+                    return new Resource<>(carrera);
+                })
                 .collect(Collectors.toList());
 
         Resources<Resource<Carrera>> respuesta = new Resources<>(carreras,
@@ -52,9 +55,9 @@ public class RecursoCarreras {
     @PostMapping
     public ResponseEntity agregarCarrera(@RequestBody Carrera carrera) {
         Carrera carreraAgregada = servicioCarreras.guardarCarrera(carrera);
-        Link linkPropio = linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(carreraAgregada.getIdentificador())).withSelfRel();
-        Resource<Carrera> respuesta = new Resource<>(carreraAgregada, generarLinks(carreraAgregada));
-        return ResponseEntity.created(URI.create(linkPropio.getHref())).body(respuesta);
+        LinksHelper.agregarLinks(carreraAgregada);
+        Resource<Carrera> respuesta = new Resource<>(carreraAgregada);
+        return ResponseEntity.created(URI.create(carreraAgregada.getLink("self").getHref())).body(respuesta);
     }
 
     @PutMapping("/{id}")
@@ -64,7 +67,8 @@ public class RecursoCarreras {
         if(carreraModificada == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<Carrera> respuesta = new Resource<>(carreraModificada, generarLinks(carrera));
+            LinksHelper.agregarLinks(carreraModificada);
+            Resource<Carrera> respuesta = new Resource<>(carreraModificada);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -73,12 +77,5 @@ public class RecursoCarreras {
     public ResponseEntity eliminarCarrera(@PathVariable Integer id) {
         servicioCarreras.eliminarCarrera(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-    private List<Link> generarLinks(Carrera carrera) {
-        ArrayList<Link> links = new ArrayList<>();
-        links.add(linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(carrera.getIdentificador())).withSelfRel());
-        links.add(linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carrera"));
-        return links;
     }
 }

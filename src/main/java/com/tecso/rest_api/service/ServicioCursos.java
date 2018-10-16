@@ -30,7 +30,7 @@ public class ServicioCursos {
     }
 
     public Curso guardarCurso(Curso curso) {
-        //TODO agregar json mapping customizado en controlador para traducir URIs en entidades (sin usar spring data rest)
+        //TODO agregar json mapping customizado en controlador para traducir URIs en entidades para objetos anidados (sin usar spring data rest)
         curso.setProfesor(repositorioProfesor.findOne(curso.getProfesor().getIdentificador()));
         curso.setCarrera(repositorioCarrera.findOne(curso.getCarrera().getIdentificador()));
         return repositorioCurso.save(curso);

@@ -5,8 +5,8 @@ import com.tecso.rest_api.exceptions.NoInscriptoEnCarreraException;
 import com.tecso.rest_api.service.ServicioAlumnos;
 import com.tecso.rest_api.service.ServicioCursos;
 import com.tecso.rest_api.service.ServicioInscripciones;
+import com.tecso.rest_api.util.LinksHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,7 +42,8 @@ public class RecursoInscripcionesCursos {
         if (inscripcionCurso == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<InscripcionCurso> respuesta = new Resource<>(inscripcionCurso, generarLinks(inscripcionCurso));
+            LinksHelper.agregarLinks(inscripcionCurso);
+            Resource<InscripcionCurso> respuesta = new Resource<>(inscripcionCurso);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -51,7 +51,10 @@ public class RecursoInscripcionesCursos {
     @GetMapping("/inscripciones-cursos")
     public ResponseEntity listarInscripcionesCursos() {
         List<Resource<InscripcionCurso>> inscripciones = servicioInscripciones.listarInscripcionesCursos().stream()
-                .map(inscripcionCurso -> new Resource<>(inscripcionCurso, generarLinks(inscripcionCurso)))
+                .map(inscripcionCurso -> {
+                    LinksHelper.agregarLinks(inscripcionCurso);
+                    return new Resource<>(inscripcionCurso);
+                })
                 .collect(Collectors.toList());
 
         Resources<Resource<InscripcionCurso>> respuesta = new Resources<>(inscripciones,
@@ -64,6 +67,8 @@ public class RecursoInscripcionesCursos {
                                          @PathVariable Integer idCurso,
                                          @PathVariable Integer idAlumno) {
 
+        Boolean inscripcionExiste = servicioInscripciones.obtenerInscripcionCurso(new InscripcionCursoId(idCurso, idAlumno)) != null;
+
         inscripcionCurso.setAlumno(servicioAlumnos.obtenerAlumno(idAlumno));
         inscripcionCurso.setCurso(servicioCursos.obtenerCurso(idCurso));
         if(inscripcionCurso.getFechaInscripcion() == null) {
@@ -72,44 +77,17 @@ public class RecursoInscripcionesCursos {
 
         try {
             InscripcionCurso inscripcionGuardada = servicioInscripciones.inscribirCurso(inscripcionCurso);
-            Link linkPropio = linkTo(methodOn(RecursoInscripcionesCursos.class).obtenerInscripcionCurso(idCurso, idAlumno)).withSelfRel();
-            Resource<InscripcionCurso> respuesta = new Resource<>(inscripcionGuardada, generarLinks(inscripcionGuardada));
-            return ResponseEntity.created(URI.create(linkPropio.getHref())).body(respuesta);
+            LinksHelper.agregarLinks(inscripcionGuardada);
+            Resource<InscripcionCurso> respuesta = new Resource<>(inscripcionGuardada);
+            if (inscripcionExiste) {
+                return ResponseEntity.ok().body(respuesta);
+            } else {
+                return ResponseEntity.created(URI.create(inscripcionGuardada.getLink("self").getHref())).body(respuesta);
+            }
+
         } catch (NoInscriptoEnCarreraException e) {
             //TODO agregar error handling y respuesta adecuada
             return ResponseEntity.badRequest().build();
         }
     }
-
-    private List<Link> generarLinks(InscripcionCurso inscripcionCurso) {
-        ArrayList<Link> links = new ArrayList<>();
-        if (!inscripcionCurso.getAlumno().hasLinks()) {
-            inscripcionCurso.getAlumno().add(
-                    linkTo(methodOn(RecursoAlumnos.class).obtenerAlumno(inscripcionCurso.getAlumno().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoAlumnos.class).listarAlumnos()).withRel("alumnos"));
-        }
-        if (!inscripcionCurso.getCurso().hasLinks()) {
-            inscripcionCurso.getCurso().add(
-                    linkTo(methodOn(RecursoCursos.class).obtenerCurso(inscripcionCurso.getCurso().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoCursos.class).listarCursos()).withRel("cursos"));
-        }
-        if (!inscripcionCurso.getCurso().getCarrera().hasLinks()) {
-            inscripcionCurso.getCurso().getCarrera().add(
-                    linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(inscripcionCurso.getCurso().getCarrera().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carreras"));
-        }
-        if (!inscripcionCurso.getCurso().getProfesor().hasLinks()) {
-            inscripcionCurso.getCurso().getProfesor().add(
-                    linkTo(methodOn(RecursoProfesores.class).obtenerProfesor(inscripcionCurso.getCurso().getProfesor().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoProfesores.class).listarProfesores()).withRel("profesores"));
-        }
-        links.add(linkTo(methodOn(RecursoInscripcionesCursos.class).obtenerInscripcionCurso(
-                inscripcionCurso.getCurso().getIdentificador(),
-                inscripcionCurso.getAlumno().getIdentificador()))
-                .withSelfRel());
-        links.add(linkTo(methodOn(RecursoInscripcionesCursos.class).listarInscripcionesCursos()).withRel("inscripciones-cursos"));
-
-        return links;
-    }
-
 }

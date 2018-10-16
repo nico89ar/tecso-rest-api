@@ -5,8 +5,8 @@ import com.tecso.rest_api.entity.InscripcionCarreraId;
 import com.tecso.rest_api.service.ServicioAlumnos;
 import com.tecso.rest_api.service.ServicioCarreras;
 import com.tecso.rest_api.service.ServicioInscripciones;
+import com.tecso.rest_api.util.LinksHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,7 +42,8 @@ public class RecursoInscripcionesCarreras {
         if (inscripcionCarrera == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<InscripcionCarrera> respuesta = new Resource<>(inscripcionCarrera, generarLinks(inscripcionCarrera));
+            LinksHelper.agregarLinks(inscripcionCarrera);
+            Resource<InscripcionCarrera> respuesta = new Resource<>(inscripcionCarrera);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -51,7 +51,10 @@ public class RecursoInscripcionesCarreras {
     @GetMapping("/inscripciones-carreras")
     public ResponseEntity listarInscripcionesCarreras() {
         List<Resource<InscripcionCarrera>> inscripciones = servicioInscripciones.listarInscripcionesCarreras().stream()
-                .map(inscripcionCarrera -> new Resource<>(inscripcionCarrera, generarLinks(inscripcionCarrera)))
+                .map(inscripcionCarrera -> {
+                    LinksHelper.agregarLinks(inscripcionCarrera);
+                    return new Resource<>(inscripcionCarrera);
+                })
                 .collect(Collectors.toList());
 
         Resources<Resource<InscripcionCarrera>> respuesta = new Resources<>(inscripciones,
@@ -64,6 +67,8 @@ public class RecursoInscripcionesCarreras {
                                          @PathVariable Integer idCarrera,
                                          @PathVariable Integer idAlumno) {
 
+        Boolean inscripcionExiste = servicioInscripciones.obtenerInscripcionCarrera(new InscripcionCarreraId(idCarrera, idAlumno)) != null;
+
         inscripcionCarrera.setAlumno(servicioAlumnos.obtenerAlumno(idAlumno));
         inscripcionCarrera.setCarrera(servicioCarreras.obtenerCarrera(idCarrera));
         if(inscripcionCarrera.getFechaInscripcion() == null) {
@@ -72,30 +77,12 @@ public class RecursoInscripcionesCarreras {
 
         InscripcionCarrera inscripcionGuardada = servicioInscripciones.inscribirCarrera(inscripcionCarrera);
 
-        Link linkPropio = linkTo(methodOn(RecursoInscripcionesCarreras.class).obtenerInscripcionCarrera(idCarrera, idAlumno)).withSelfRel();
-        Resource<InscripcionCarrera> respuesta = new Resource<>(inscripcionGuardada, generarLinks(inscripcionGuardada));
-        return ResponseEntity.created(URI.create(linkPropio.getHref())).body(respuesta);
-    }
-
-    private List<Link> generarLinks(InscripcionCarrera inscripcionCarrera) {
-        ArrayList<Link> links = new ArrayList<>();
-        if (!inscripcionCarrera.getAlumno().hasLinks()) {
-            inscripcionCarrera.getAlumno().add(
-                    linkTo(methodOn(RecursoAlumnos.class).obtenerAlumno(inscripcionCarrera.getAlumno().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoAlumnos.class).listarAlumnos()).withRel("alumnos"));
+        LinksHelper.agregarLinks(inscripcionGuardada);
+        Resource<InscripcionCarrera> respuesta = new Resource<>(inscripcionGuardada);
+        if (inscripcionExiste) {
+            return ResponseEntity.ok().body(respuesta);
+        } else {
+            return ResponseEntity.created(URI.create(inscripcionGuardada.getLink("self").getHref())).body(respuesta);
         }
-        if (!inscripcionCarrera.getCarrera().hasLinks()) {
-            inscripcionCarrera.getCarrera().add(
-                    linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(inscripcionCarrera.getCarrera().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carreras"));
-        }
-        links.add(linkTo(methodOn(RecursoInscripcionesCarreras.class).obtenerInscripcionCarrera(
-                inscripcionCarrera.getCarrera().getIdentificador(),
-                inscripcionCarrera.getAlumno().getIdentificador()))
-                .withSelfRel());
-        links.add(linkTo(methodOn(RecursoInscripcionesCarreras.class).listarInscripcionesCarreras()).withRel("inscripciones-carreras"));
-
-        return links;
     }
-
 }

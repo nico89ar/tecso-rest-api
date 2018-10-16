@@ -46,6 +46,10 @@ public class ServicioInscripciones {
         return repositorioInscripcionCurso.findAlumnosByCurso(curso);
     }
 
+    public List<InscripcionCurso> listarInsripcionesCursosPorAlumnoYCarrera(Alumno alumno, Carrera carrera) {
+        return repositorioInscripcionCurso.findInscripcionCursosByAlumnoAndCurso_Carrera(alumno, carrera);
+    }
+
     public InscripcionCarrera obtenerInscripcionCarrera(InscripcionCarreraId id) {
         return repositorioInscripcionCarrera.findOne(id);
     }

@@ -2,8 +2,8 @@ package com.tecso.rest_api.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonView;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.hateoas.ResourceSupport;
@@ -12,8 +12,9 @@ import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper = false, exclude={"inscripcionesCursos"})
+@ToString(exclude={"inscripcionesCursos"})
 public class Curso extends ResourceSupport {
 
     @Id
@@ -38,6 +39,7 @@ public class Curso extends ResourceSupport {
 
     @ManyToOne
     @JoinColumn(name = "idcarrera", nullable = false)
+    @JsonView(View.Ignorar.class)
     private Carrera carrera;
 
     @ManyToOne

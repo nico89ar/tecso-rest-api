@@ -3,8 +3,8 @@ package com.tecso.rest_api.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.hateoas.ResourceSupport;
 
 import javax.persistence.*;
@@ -13,8 +13,8 @@ import java.time.LocalDate;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Inheritance(strategy= InheritanceType.JOINED)
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class Persona extends ResourceSupport {
 
     @Id

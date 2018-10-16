@@ -25,7 +25,7 @@ public class InscripcionCarreraId implements Serializable {
     public boolean equals(Object object) {
         if (object instanceof InscripcionCarreraId) {
             InscripcionCarreraId otro = (InscripcionCarreraId) object;
-            return  this.alumno == otro.alumno && this.carrera == otro.carrera;
+            return  this.alumno == otro.getAlumno() && this.carrera == otro.getCarrera();
         }
         return false;
     }

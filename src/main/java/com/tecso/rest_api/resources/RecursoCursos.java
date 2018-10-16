@@ -5,8 +5,8 @@ import com.tecso.rest_api.entity.Curso;
 import com.tecso.rest_api.response.AlumnosEnCursoResponse;
 import com.tecso.rest_api.service.ServicioCursos;
 import com.tecso.rest_api.service.ServicioInscripciones;
+import com.tecso.rest_api.util.LinksHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,8 @@ public class RecursoCursos {
         if (curso == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<Curso> respuesta = new Resource<>(curso, generarLinks(curso));
+            LinksHelper.agregarLinks(curso);
+            Resource<Curso> respuesta = new Resource<>(curso);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -47,7 +47,10 @@ public class RecursoCursos {
     @GetMapping
     public ResponseEntity listarCursos() {
         List<Resource<Curso>> cursos = servicioCursos.listarCursos().stream()
-                .map(curso -> new Resource<>(curso, generarLinks(curso)))
+                .map(curso -> {
+                    LinksHelper.agregarLinks(curso);
+                    return new Resource<>(curso);
+                })
                 .collect(Collectors.toList());
 
         Resources<Resource<Curso>> respuesta = new Resources<>(cursos,
@@ -59,27 +62,20 @@ public class RecursoCursos {
     public ResponseEntity listarAlumnosInscriptos(@PathVariable Integer id) {
         Curso curso = servicioCursos.obtenerCurso(id);
         List<Alumno> alumnos  = servicioInscripciones.listarAlumnosInscriptosEnCurso(curso);
-        for (Alumno alumno : alumnos) {
-            alumno.add(linkTo(methodOn(RecursoAlumnos.class).obtenerAlumno(alumno.getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoAlumnos.class).listarAlumnos()).withRel("alumnos"));
-        }
-        curso.getProfesor().add(
-                linkTo(methodOn(RecursoProfesores.class).obtenerProfesor(curso.getProfesor().getIdentificador())).withSelfRel(),
-                linkTo(methodOn(RecursoProfesores.class).listarProfesores()).withRel("profesores"));
-        curso.getCarrera().add(
-                linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(curso.getCarrera().getIdentificador())).withSelfRel(),
-                linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carreras"));
-        Resource<AlumnosEnCursoResponse> respuesta = new Resource<>(new AlumnosEnCursoResponse(curso, alumnos),
-                linkTo(methodOn(RecursoCursos.class).listarAlumnosInscriptos(curso.getIdentificador())).withSelfRel());
+
+        AlumnosEnCursoResponse alumnosEnCursoResponse = new AlumnosEnCursoResponse(curso, alumnos);
+        LinksHelper.agregarLinks(alumnosEnCursoResponse);
+
+        Resource<AlumnosEnCursoResponse> respuesta = new Resource<>(alumnosEnCursoResponse);
         return ResponseEntity.ok(respuesta);
     }
 
     @PostMapping
     public ResponseEntity agregarCurso(@RequestBody Curso curso) {
         Curso cursoAgregado = servicioCursos.guardarCurso(curso);
-        Link linkPropio = linkTo(methodOn(RecursoCursos.class).obtenerCurso(cursoAgregado.getIdentificador())).withSelfRel();
-        Resource<Curso> respuesta = new Resource<>(cursoAgregado, generarLinks(cursoAgregado));
-        return ResponseEntity.created(URI.create(linkPropio.getHref())).body(respuesta);
+        LinksHelper.agregarLinks(cursoAgregado);
+        Resource<Curso> respuesta = new Resource<>(cursoAgregado);
+        return ResponseEntity.created(URI.create(cursoAgregado.getLink("self").getHref())).body(respuesta);
     }
 
     @PutMapping("/{id}")
@@ -89,7 +85,8 @@ public class RecursoCursos {
         if(cursoModificado == null) {
             return ResponseEntity.notFound().build();
         } else {
-            Resource<Curso> respuesta = new Resource<>(cursoModificado, generarLinks(curso));
+            LinksHelper.agregarLinks(cursoModificado);
+            Resource<Curso> respuesta = new Resource<>(cursoModificado);
             return ResponseEntity.ok(respuesta);
         }
     }
@@ -98,23 +95,5 @@ public class RecursoCursos {
     public ResponseEntity eliminarCurso(@PathVariable Integer id) {
         servicioCursos.eliminarCurso(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-    private List<Link> generarLinks(Curso curso) {
-        ArrayList<Link> links = new ArrayList<>();
-        if (!curso.getProfesor().hasLinks()) {
-            curso.getProfesor().add(
-                    linkTo(methodOn(RecursoProfesores.class).obtenerProfesor(curso.getProfesor().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoProfesores.class).listarProfesores()).withRel("profesores"));
-        }
-        if (!curso.getCarrera().hasLinks()) {
-            curso.getCarrera().add(
-                    linkTo(methodOn(RecursoCarreras.class).obtenerCarrera(curso.getCarrera().getIdentificador())).withSelfRel(),
-                    linkTo(methodOn(RecursoCarreras.class).listarCarreras()).withRel("carreras"));
-        }
-        links.add(linkTo(methodOn(RecursoCursos.class).obtenerCurso(curso.getIdentificador())).withSelfRel());
-        links.add(linkTo(methodOn(RecursoCursos.class).listarCursos()).withRel("cursos"));
-
-        return links;
     }
 }
